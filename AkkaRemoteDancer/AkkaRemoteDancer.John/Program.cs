@@ -19,50 +19,53 @@ namespace AkkaRemoteDancer.John
         static void Main(string[] args)
         {
             var actorSystem = ActorSystem.Create("John");
+            Stopwatch sw1;
+            int fails;
+            int success;
             {
                 var maryStoreAddress = ConfigurationManager.AppSettings["MaryStoreAddress"];
                 var storetoreActorSelection = actorSystem.ActorSelection(maryStoreAddress);
                 var count = 10000;
-                var fails = 0;
-                var Success = 0;
+                 fails = 0;
+                 success = 0;
               
-                System.Threading.Thread.Sleep(10000);
+                System.Threading.Thread.Sleep(5000);
+                 sw1 = new Stopwatch();
+                sw1.Start();
 
-                Parallel.For(0,count, new ParallelOptions { MaxDegreeOfParallelism = 10 }, async x =>
+                var storetoreActorIActorRef=   storetoreActorSelection.ResolveOne(TimeSpan.FromSeconds(3)).Result;
+
+
+                Parallel.For(0,count, new ParallelOptions { MaxDegreeOfParallelism = 3 }, async x =>
                 {
                     var sw= new Stopwatch();
                     sw.Start();
-
                     try
                     {
-
-                        Console.WriteLine("trying to reserve " + x);
+                        Log.Debug("trying to reserve " + x);
                         //await  storetoreActorSelection.ResolveOne(TimeSpan.FromSeconds(3));
-                        var reserveResult =
-                            await
-                                storetoreActorSelection.Ask<ReserveCompletedMessage>(new ReserveMessage(x),
-                                    TimeSpan.FromSeconds(3));
+                        var reserveResult =await storetoreActorSelection.Ask<ReserveCompletedMessage>(new ReserveMessage(x),TimeSpan.FromSeconds(5));
                         if (string.IsNullOrEmpty(reserveResult?.ReservationId))
                         {
                             throw new Exception("Unable to reserve" + x);
                         }
-                        Console.WriteLine("reserved successfully" + x);
-                      
-                     
+                        Log.Debug("reserved successfully" + x);
                     }
                     catch (Exception e)
                     {
-                   Console.WriteLine(sw.ElapsedMilliseconds);
+                        fails++;
+                        Console.ForegroundColor= ConsoleColor.DarkRed;
+                        Console.WriteLine( "Failed , took  "+sw.ElapsedMilliseconds+" ms");
+                        Console.ResetColor();
                       //  Console.WriteLine(e);
                     }
-
+                  
                 });
-              
-
-              
 
             }
-            Console.WriteLine("All done !!!!!");
+            sw1.Stop();
+            System.Threading.Thread.Sleep(3000);
+            Console.WriteLine("All done !!!!! in "+ sw1.ElapsedMilliseconds+" ms Failures : "+ fails+"  - Successes : "+ success);
             Console.ReadLine();
         }
     }
