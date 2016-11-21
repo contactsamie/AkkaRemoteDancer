@@ -29,14 +29,26 @@ namespace AkkaRemoteDancer.John
                  fails = 0;
                  success = 0;
               
+              
+
+                Console.ReadLine();
+                var storetoreActorIActorRef=   storetoreActorSelection.ResolveOne(TimeSpan.FromSeconds(3)).Result;
+                var r1 =  storetoreActorIActorRef.Ask<ReserveCompletedMessage>(new ReserveMessage(1), TimeSpan.FromSeconds(5)).Result;
+                Console.ReadLine();
+                try
+                {
+                    var r2 = storetoreActorIActorRef.Ask<ReserveCompletedMessage>(new ReserveMessage(1), TimeSpan.FromSeconds(5)).Result;
+                }
+                catch (Exception)
+                {
+                    
+                    throw;
+                }
                 System.Threading.Thread.Sleep(5000);
-                 sw1 = new Stopwatch();
+                sw1 = new Stopwatch();
                 sw1.Start();
 
-                var storetoreActorIActorRef=   storetoreActorSelection.ResolveOne(TimeSpan.FromSeconds(3)).Result;
-
-
-                Parallel.For(0,count, new ParallelOptions { MaxDegreeOfParallelism = 3 }, async x =>
+                Parallel.For(0,count, new ParallelOptions { MaxDegreeOfParallelism = 1 }, async x =>
                 {
                     var sw= new Stopwatch();
                     sw.Start();
